@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      
+      // Загрузить все возможные корабли. Должен быть метод, который принимает имя корабля и показывает список названий всех фильмов, где он встречался. Если данные о фильме уже получены для предыдущего корабля, то их запрашивать не нужно.
+ 
+      class Starship {
+        constructor() {
+          this.cache = new Map();
+        }
+
+        async getStarshipFilms(name) {
+          if (this.cache.has(name)) {
+            return this.cache.get(name);
+          }
+
+          const response = await fetch(
+            `https://swapi.dev/api/starships/?search=${name}`
+          );
+          const data = await response.json();
+          console.log(response);
+          if (data.count === 0) {
+            
+            throw new Error(`Starship ${name} not found`);
+          }
+
+          const films = data.results[0].films;
+
+          const filmTitles = await Promise.all(
+            films.map(async (filmUrl) => {
+              const filmResponse = await fetch(filmUrl);
+              const filmData = await filmResponse.json();
+              return filmData.title;
+            })
+          );
+
+          this.cache.set(name, filmTitles);
+
+          return filmTitles;
+        }
+      }
+
+      const starship = new Starship();
+      starship
+        .getStarshipFilms("Millennium Falcon")
+        .then((films) => {
+          console.log(`${films.join(", ")}`);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    </script>
+  </body>
+</html>
